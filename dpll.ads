@@ -11,15 +11,15 @@ is
    Max_Literals  : constant := 1024;
    Max_Clauses   : constant := 1024;
 
-   --  Strong domain types
-   type Variable_Id is range 1 .. Max_Variables;
+   --  Strong domain types: Indexes are subtypes of Counts to unify constraint types
    type Variable_Count is range 0 .. Max_Variables;
+   subtype Variable_Id is Variable_Count range 1 .. Max_Variables;
 
    type Literal_Count is range 0 .. Max_Literals;
-   type Clause_Count is range 0 .. Max_Clauses;
+   subtype Literal_Index is Literal_Count range 1 .. Max_Literals;
 
-   subtype Literal_Index is Positive range 1 .. Max_Literals;
-   subtype Clause_Index  is Positive range 1 .. Max_Clauses;
+   type Clause_Count is range 0 .. Max_Clauses;
+   subtype Clause_Index is Clause_Count range 1 .. Max_Clauses;
 
    --  Enumeration for literal sign; named to avoid collision with Standard.Positive
    type Sign_Type is (Positive_Sign, Negative_Sign);
