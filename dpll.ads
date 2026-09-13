@@ -18,6 +18,9 @@ is
    type Literal_Count is range 0 .. Max_Literals;
    type Clause_Count is range 0 .. Max_Clauses;
 
+   subtype Literal_Index is Positive range 1 .. Max_Literals;
+   subtype Clause_Index  is Positive range 1 .. Max_Clauses;
+
    --  Enumeration for literal sign; named to avoid collision with Standard.Positive
    type Sign_Type is (Positive_Sign, Negative_Sign);
 
@@ -26,16 +29,16 @@ is
       Sign : Sign_Type;
    end record;
 
-   type Literal_Array is array (Positive range <>) of Literal;
+   type Literal_Array is array (Literal_Index range <>) of Literal;
 
    type Clause (Length : Literal_Count := 0) is record
-      Lits : Literal_Array (1 .. Integer (Length));
+      Lits : Literal_Array (1 .. Length);
    end record;
 
-   type Clause_Array is array (Positive range <>) of Clause;
+   type Clause_Array is array (Clause_Index range <>) of Clause;
 
    type Formula (Num_Clauses : Clause_Count := 0; Num_Vars : Variable_Count := 0) is record
-      Clauses : Clause_Array (1 .. Integer (Num_Clauses));
+      Clauses : Clause_Array (1 .. Num_Clauses);
    end record;
 
    type Variable_State is (Unassigned, Assigned_True, Assigned_False);
