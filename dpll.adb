@@ -25,8 +25,8 @@ package body DPLL is
 
    function Is_Valid_Formula (F : Formula) return Boolean is
    begin
-      for I in 1 .. Integer (F.Num_Clauses) loop
-         for J in 1 .. Integer (F.Clauses (I).Length) loop
+      for I in 1 .. F.Num_Clauses loop
+         for J in 1 .. F.Clauses (I).Length loop
             if F.Clauses (I).Lits (J).Var > F.Num_Vars then
                return False;
             end if;
@@ -38,7 +38,7 @@ package body DPLL is
    function Evaluate_Clause (C : Clause; M : Valuation) return Variable_State is
       Has_Unassigned : Boolean := False;
    begin
-      for I in 1 .. Integer (C.Length) loop
+      for I in 1 .. C.Length loop
          declare
             Lit : constant Literal := C.Lits (I);
             Val : constant Variable_State := M (Lit.Var);
@@ -68,7 +68,7 @@ package body DPLL is
 
    function Is_Model (F : Formula; M : Valuation) return Boolean is
    begin
-      for I in 1 .. Integer (F.Num_Clauses) loop
+      for I in 1 .. F.Num_Clauses loop
          if Evaluate_Clause (F.Clauses (I), M) /= Assigned_True then
             return False;
          end if;
@@ -96,14 +96,14 @@ package body DPLL is
          Clauses     => [others => Clause'(Length => 0, Lits => [others => Literal'(Var => 1, Sign => Positive_Sign)])]
       );
 
-      for C_Idx in 1 .. Integer (F_In.Num_Clauses) loop
+      for C_Idx in 1 .. F_In.Num_Clauses loop
          declare
             C : constant Clause := F_In.Clauses (C_Idx);
             Clause_Satisfied : Boolean := False;
-            Kept_Literals    : Literal_Array (1 .. Integer (C.Length));
+            Kept_Literals    : Literal_Array (1 .. C.Length);
             Kept_Count       : Natural := 0;
          begin
-            for L_Idx in 1 .. Integer (C.Length) loop
+            for L_Idx in 1 .. C.Length loop
                declare
                   Lit : constant Literal := C.Lits (L_Idx);
                begin
@@ -116,7 +116,7 @@ package body DPLL is
                      end if;
                   else
                      Kept_Count := Kept_Count + 1;
-                     Kept_Literals (Kept_Count) := Lit;
+                     Kept_Literals (Literal_Count (Kept_Count)) := Lit;
                   end if;
                end;
             end loop;
@@ -127,9 +127,9 @@ package body DPLL is
                   return;
                end if;
                Out_Clause_Idx := Out_Clause_Idx + 1;
-               F_Out.Clauses (Out_Clause_Idx) := Clause'(
+               F_Out.Clauses (Clause_Count (Out_Clause_Idx)) := Clause'(
                   Length => Literal_Count (Kept_Count),
-                  Lits   => Kept_Literals (1 .. Kept_Count)
+                  Lits   => Kept_Literals (1 .. Literal_Count (Kept_Count))
                );
             end if;
          end;
@@ -156,14 +156,14 @@ package body DPLL is
       loop
          Found_Unit := False;
 
-         for I in 1 .. Integer (F_Current.Num_Clauses) loop
+         for I in 1 .. F_Current.Num_Clauses loop
             if F_Current.Clauses (I).Length = 0 then
                Conflict := True;
                return;
             end if;
          end loop;
 
-         for I in 1 .. Integer (F_Current.Num_Clauses) loop
+         for I in 1 .. F_Current.Num_Clauses loop
             if F_Current.Clauses (I).Length = 1 then
                declare
                   Unit_Lit : constant Literal := F_Current.Clauses (I).Lits (1);
@@ -213,8 +213,8 @@ package body DPLL is
       Conflict := False;
       Changed := False;
 
-      for I in 1 .. Integer (F_Current.Num_Clauses) loop
-         for J in 1 .. Integer (F_Current.Clauses (I).Length) loop
+      for I in 1 .. F_Current.Num_Clauses loop
+         for J in 1 .. F_Current.Clauses (I).Length loop
             declare
                Lit : constant Literal := F_Current.Clauses (I).Lits (J);
             begin
@@ -287,8 +287,8 @@ package body DPLL is
                Best_Var  : Variable_Id := 1;
                Max_Count : Integer := -1;
             begin
-               for I in 1 .. Integer (F.Num_Clauses) loop
-                  for J in 1 .. Integer (F.Clauses (I).Length) loop
+               for I in 1 .. F.Num_Clauses loop
+                  for J in 1 .. F.Clauses (I).Length loop
                      declare
                         V : constant Variable_Id := F.Clauses (I).Lits (J).Var;
                      begin
@@ -317,15 +317,15 @@ package body DPLL is
                Best_Var  : Variable_Id := 1;
                Max_Count : Integer := -1;
             begin
-               for I in 1 .. Integer (F.Num_Clauses) loop
+               for I in 1 .. F.Num_Clauses loop
                   if F.Clauses (I).Length < Min_Len and F.Clauses (I).Length > 0 then
                      Min_Len := F.Clauses (I).Length;
                   end if;
                end loop;
 
-               for I in 1 .. Integer (F.Num_Clauses) loop
+               for I in 1 .. F.Num_Clauses loop
                   if F.Clauses (I).Length = Min_Len then
-                     for J in 1 .. Integer (F.Clauses (I).Length) loop
+                     for J in 1 .. F.Clauses (I).Length loop
                         declare
                            V : constant Variable_Id := F.Clauses (I).Lits (J).Var;
                         begin
@@ -404,7 +404,7 @@ package body DPLL is
          return Solver_Result'(Status => Satisfiable, Model => Work_Model);
       end if;
 
-      for I in 1 .. Integer (Work_F.Num_Clauses) loop
+      for I in 1 .. F_Loop_End : Work_F.Num_Clauses loop
          if Work_F.Clauses (I).Length = 0 then
             return Solver_Result'(Status => Unsatisfiable);
          end if;
