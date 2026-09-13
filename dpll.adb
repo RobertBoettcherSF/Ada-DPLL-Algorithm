@@ -6,20 +6,20 @@ package body DPLL is
 
    function Make_Pos (V : Variable_Id) return Literal is
    begin
-      return Literal'(Var => V, Sign => DPLL.Positive);
+      return Literal'(Var => V, Sign => Positive_Sign);
    end Make_Pos;
 
    function Make_Neg (V : Variable_Id) return Literal is
    begin
-      return Literal'(Var => V, Sign => DPLL.Negative);
+      return Literal'(Var => V, Sign => Negative_Sign);
    end Make_Neg;
 
    function Negate (L : Literal) return Literal is
    begin
-      if L.Sign = DPLL.Positive then
-         return Literal'(Var => L.Var, Sign => DPLL.Negative);
+      if L.Sign = Positive_Sign then
+         return Literal'(Var => L.Var, Sign => Negative_Sign);
       else
-         return Literal'(Var => L.Var, Sign => DPLL.Positive);
+         return Literal'(Var => L.Var, Sign => Positive_Sign);
       end if;
    end Negate;
 
@@ -43,7 +43,7 @@ package body DPLL is
             Lit : constant Literal := C.Lits (I);
             Val : constant Variable_State := M (Lit.Var);
          begin
-            if Lit.Sign = DPLL.Positive then
+            if Lit.Sign = Positive_Sign then
                if Val = Assigned_True then
                   return Assigned_True;
                elsif Val = Unassigned then
@@ -90,7 +90,11 @@ package body DPLL is
       Out_Clause_Idx : Natural := 0;
    begin
       Conflict := False;
-      F_Out := Formula'(Num_Clauses => 0, Num_Vars => F_In.Num_Vars, Clauses => [others => Clause'(Length => 0, Lits => [others => Literal'(Var => 1, Sign => DPLL.Positive)])]);
+      F_Out := Formula'(
+         Num_Clauses => 0,
+         Num_Vars    => F_In.Num_Vars,
+         Clauses     => [others => Clause'(Length => 0, Lits => [others => Literal'(Var => 1, Sign => Positive_Sign)])]
+      );
 
       for C_Idx in 1 .. Integer (F_In.Num_Clauses) loop
          declare
@@ -104,8 +108,8 @@ package body DPLL is
                   Lit : constant Literal := C.Lits (L_Idx);
                begin
                   if Lit.Var = V then
-                     if (Lit.Sign = DPLL.Positive and then Val = Assigned_True) or else
-                        (Lit.Sign = DPLL.Negative and then Val = Assigned_False)
+                     if (Lit.Sign = Positive_Sign and then Val = Assigned_True) or else
+                        (Lit.Sign = Negative_Sign and then Val = Assigned_False)
                      then
                         Clause_Satisfied := True;
                         exit;
@@ -164,7 +168,7 @@ package body DPLL is
                declare
                   Unit_Lit : constant Literal := F_Current.Clauses (I).Lits (1);
                   New_Val  : constant Variable_State :=
-                    (if Unit_Lit.Sign = DPLL.Positive then Assigned_True else Assigned_False);
+                    (if Unit_Lit.Sign = Positive_Sign then Assigned_True else Assigned_False);
                   Next_F   : Formula;
                begin
                   if Model (Unit_Lit.Var) /= Unassigned and then Model (Unit_Lit.Var) /= New_Val then
@@ -214,7 +218,7 @@ package body DPLL is
             declare
                Lit : constant Literal := F_Current.Clauses (I).Lits (J);
             begin
-               if Lit.Sign = DPLL.Positive then
+               if Lit.Sign = Positive_Sign then
                   Occurrences (Lit.Var).Has_Pos := True;
                else
                   Occurrences (Lit.Var).Has_Neg := True;
