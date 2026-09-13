@@ -7,9 +7,11 @@ package DPLL with
 is
 
    --  Maximum number of variables and clauses supported
-   Max_Variables : constant := 256;
-   Max_Literals  : constant := 1024;
-   Max_Clauses   : constant := 1024;
+   --  Reduced bounds to 64 to prevent stack overflows (STORAGE_ERROR) 
+   --  when allocating multiple unconstrained Formula records in recursive frames.
+   Max_Variables : constant := 64;
+   Max_Literals  : constant := 64;
+   Max_Clauses   : constant := 64;
 
    --  Strong domain types: Indexes are subtypes of Counts to unify constraint types
    type Variable_Count is range 0 .. Max_Variables;
