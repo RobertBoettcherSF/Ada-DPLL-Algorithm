@@ -87,7 +87,7 @@ package body DPLL is
       F_Out    : out Formula;
       Conflict : out Boolean)
    is
-      Out_Clause_Idx : Natural := 0;
+      Out_Clause_Idx : Clause_Count := 0;
    begin
       Conflict := False;
       F_Out := Formula'(
@@ -101,7 +101,7 @@ package body DPLL is
             C : constant Clause := F_In.Clauses (C_Idx);
             Clause_Satisfied : Boolean := False;
             Kept_Literals    : Literal_Array (1 .. C.Length);
-            Kept_Count       : Natural := 0;
+            Kept_Count       : Literal_Count := 0;
          begin
             for L_Idx in 1 .. C.Length loop
                declare
@@ -116,7 +116,7 @@ package body DPLL is
                      end if;
                   else
                      Kept_Count := Kept_Count + 1;
-                     Kept_Literals (Literal_Count (Kept_Count)) := Lit;
+                     Kept_Literals (Kept_Count) := Lit;
                   end if;
                end;
             end loop;
@@ -127,15 +127,15 @@ package body DPLL is
                   return;
                end if;
                Out_Clause_Idx := Out_Clause_Idx + 1;
-               F_Out.Clauses (Clause_Count (Out_Clause_Idx)) := Clause'(
-                  Length => Literal_Count (Kept_Count),
-                  Lits   => Kept_Literals (1 .. Literal_Count (Kept_Count))
+               F_Out.Clauses (Out_Clause_Idx) := Clause'(
+                  Length => Kept_Count,
+                  Lits   => Kept_Literals (1 .. Kept_Count)
                );
             end if;
          end;
       end loop;
 
-      F_Out.Num_Clauses := Clause_Count (Out_Clause_Idx);
+      F_Out.Num_Clauses := Out_Clause_Idx;
    end Assign_And_Simplify;
 
    ----------------------------------------------------------------------------
@@ -404,7 +404,7 @@ package body DPLL is
          return Solver_Result'(Status => Satisfiable, Model => Work_Model);
       end if;
 
-      for I in 1 .. F_Loop_End : Work_F.Num_Clauses loop
+      for I in 1 .. Work_F.Num_Clauses loop
          if Work_F.Clauses (I).Length = 0 then
             return Solver_Result'(Status => Unsatisfiable);
          end if;
