@@ -6,20 +6,20 @@ package body DPLL is
 
    function Make_Pos (V : Variable_Id) return Literal is
    begin
-      return Literal'(Var => V, Sign => Positive);
+      return Literal'(Var => V, Sign => DPLL.Positive);
    end Make_Pos;
 
    function Make_Neg (V : Variable_Id) return Literal is
    begin
-      return Literal'(Var => V, Sign => Negative);
+      return Literal'(Var => V, Sign => DPLL.Negative);
    end Make_Neg;
 
    function Negate (L : Literal) return Literal is
    begin
-      if L.Sign = Positive then
-         return Literal'(Var => L.Var, Sign => Negative);
+      if L.Sign = DPLL.Positive then
+         return Literal'(Var => L.Var, Sign => DPLL.Negative);
       else
-         return Literal'(Var => L.Var, Sign => Positive);
+         return Literal'(Var => L.Var, Sign => DPLL.Positive);
       end if;
    end Negate;
 
@@ -43,7 +43,7 @@ package body DPLL is
             Lit : constant Literal := C.Lits (I);
             Val : constant Variable_State := M (Lit.Var);
          begin
-            if Lit.Sign = Positive then
+            if Lit.Sign = DPLL.Positive then
                if Val = Assigned_True then
                   return Assigned_True;
                elsif Val = Unassigned then
@@ -80,10 +80,6 @@ package body DPLL is
    --  Internal Formula Manipulation
    ----------------------------------------------------------------------------
 
-   --  Simplify a formula under a given assignment:
-   --  - Drop clauses that are satisfied.
-   --  - Remove negated literals from unsatisfied clauses.
-   --  - If a clause becomes empty (Length = 0), a conflict exists.
    procedure Assign_And_Simplify
      (F_In     : Formula;
       V        : Variable_Id;
@@ -94,7 +90,7 @@ package body DPLL is
       Out_Clause_Idx : Natural := 0;
    begin
       Conflict := False;
-      F_Out := Formula'(Num_Clauses => 0, Num_Vars => F_In.Num_Vars, Clauses => (others => Clause'(Length => 0, Lits => (others => Literal'(Var => 1, Sign => Positive)))));
+      F_Out := Formula'(Num_Clauses => 0, Num_Vars => F_In.Num_Vars, Clauses => [others => Clause'(Length => 0, Lits => [others => Literal'(Var => 1, Sign => DPLL.Positive)])]);
 
       for C_Idx in 1 .. Integer (F_In.Num_Clauses) loop
          declare
@@ -108,13 +104,12 @@ package body DPLL is
                   Lit : constant Literal := C.Lits (L_Idx);
                begin
                   if Lit.Var = V then
-                     if (Lit.Sign = Positive and then Val = Assigned_True) or else
-                        (Lit.Sign = Negative and then Val = Assigned_False)
+                     if (Lit.Sign = DPLL.Positive and then Val = Assigned_True) or else
+                        (Lit.Sign = DPLL.Negative and then Val = Assigned_False)
                      then
                         Clause_Satisfied := True;
                         exit;
                      end if;
-                     --  If literal evaluates to False, it is dropped from the clause.
                   else
                      Kept_Count := Kept_Count + 1;
                      Kept_Literals (Kept_Count) := Lit;
@@ -157,7 +152,6 @@ package body DPLL is
       loop
          Found_Unit := False;
 
-         --  Detect empty clause conflict directly
          for I in 1 .. Integer (F_Current.Num_Clauses) loop
             if F_Current.Clauses (I).Length = 0 then
                Conflict := True;
@@ -165,13 +159,12 @@ package body DPLL is
             end if;
          end loop;
 
-         --  Look for unit clause (clause with length 1)
          for I in 1 .. Integer (F_Current.Num_Clauses) loop
             if F_Current.Clauses (I).Length = 1 then
                declare
                   Unit_Lit : constant Literal := F_Current.Clauses (I).Lits (1);
                   New_Val  : constant Variable_State :=
-                    (if Unit_Lit.Sign = Positive then Assigned_True else Assigned_False);
+                    (if Unit_Lit.Sign = DPLL.Positive then Assigned_True else Assigned_False);
                   Next_F   : Formula;
                begin
                   if Model (Unit_Lit.Var) /= Unassigned and then Model (Unit_Lit.Var) /= New_Val then
@@ -189,7 +182,7 @@ package body DPLL is
                      return;
                   end if;
 
-                  exit; -- Restart search after simplifying
+                  exit;
                end;
             end if;
          end loop;
@@ -216,13 +209,12 @@ package body DPLL is
       Conflict := False;
       Changed := False;
 
-      --  Count polarity occurrences of remaining variables
       for I in 1 .. Integer (F_Current.Num_Clauses) loop
          for J in 1 .. Integer (F_Current.Clauses (I).Length) loop
             declare
                Lit : constant Literal := F_Current.Clauses (I).Lits (J);
             begin
-               if Lit.Sign = Positive then
+               if Lit.Sign = DPLL.Positive then
                   Occurrences (Lit.Var).Has_Pos := True;
                else
                   Occurrences (Lit.Var).Has_Neg := True;
@@ -231,7 +223,6 @@ package body DPLL is
          end loop;
       end loop;
 
-      --  Assign pure literals
       for V in 1 .. F_Current.Num_Vars loop
          if Model (V) = Unassigned then
             if Occurrences (V).Has_Pos and not Occurrences (V).Has_Neg then
@@ -288,7 +279,7 @@ package body DPLL is
          when Max_Occurrences =>
             declare
                type Count_Array is array (Variable_Id) of Natural;
-               Counts    : Count_Array := (others => 0);
+               Counts    : Count_Array := [others => 0];
                Best_Var  : Variable_Id := 1;
                Max_Count : Integer := -1;
             begin
@@ -318,18 +309,16 @@ package body DPLL is
             declare
                Min_Len : Literal_Count := Literal_Count'Last;
                type Count_Array is array (Variable_Id) of Natural;
-               Counts    : Count_Array := (others => 0);
+               Counts    : Count_Array := [others => 0];
                Best_Var  : Variable_Id := 1;
                Max_Count : Integer := -1;
             begin
-               --  Find min clause length
                for I in 1 .. Integer (F.Num_Clauses) loop
                   if F.Clauses (I).Length < Min_Len and F.Clauses (I).Length > 0 then
                      Min_Len := F.Clauses (I).Length;
                   end if;
                end loop;
 
-               --  Count occurrences in min-size clauses
                for I in 1 .. Integer (F.Num_Clauses) loop
                   if F.Clauses (I).Length = Min_Len then
                      for J in 1 .. Integer (F.Clauses (I).Length) loop
@@ -354,7 +343,6 @@ package body DPLL is
                if Max_Count >= 0 then
                   return Best_Var;
                else
-                  --  Fallback to first unassigned if no occurrences in min clauses
                   for V in 1 .. F.Num_Vars loop
                      if Model (V) = Unassigned then
                         return V;
@@ -382,7 +370,6 @@ package body DPLL is
       Conflict   : Boolean := False;
       Changed    : Boolean;
    begin
-      --  1. Pre-simplification loop (Unit propagation and optional pure literal rule)
       loop
          Apply_Unit_Propagation (Work_F, Work_Model, Conflict, Changed);
          if Conflict then
@@ -404,10 +391,7 @@ package body DPLL is
          exit when not Changed;
       end loop;
 
-      --  2. Base cases:
-      --  Empty clause set => Satisfied
       if Work_F.Num_Clauses = 0 then
-         --  Assign remaining unassigned variables arbitrarily to True
          for V in 1 .. Work_F.Num_Vars loop
             if Work_Model (V) = Unassigned then
                Work_Model (V) := Assigned_True;
@@ -416,20 +400,17 @@ package body DPLL is
          return Solver_Result'(Status => Satisfiable, Model => Work_Model);
       end if;
 
-      --  Check if any clause has length 0 => Unsatisfiable conflict
       for I in 1 .. Integer (Work_F.Num_Clauses) loop
          if Work_F.Clauses (I).Length = 0 then
             return Solver_Result'(Status => Unsatisfiable);
          end if;
       end loop;
 
-      --  3. Branching step
       declare
          Branch_Var : constant Variable_Id := Select_Branch_Variable (Work_F, Work_Model, Heuristic);
          Branch_F   : Formula;
          Res        : Solver_Result;
       begin
-         --  Try Branch = True
          Assign_And_Simplify (Work_F, Branch_Var, Assigned_True, Branch_F, Conflict);
          if not Conflict then
             declare
@@ -443,7 +424,6 @@ package body DPLL is
             end;
          end if;
 
-         --  Backtrack: Try Branch = False
          Assign_And_Simplify (Work_F, Branch_Var, Assigned_False, Branch_F, Conflict);
          if not Conflict then
             declare
@@ -469,7 +449,7 @@ package body DPLL is
      (F         : Formula;
       Heuristic : Branching_Heuristic := First_Unassigned) return Solver_Result
    is
-      Initial_Model : constant Valuation := (others => Unassigned);
+      Initial_Model : constant Valuation := [others => Unassigned];
    begin
       if not Is_Valid_Formula (F) then
          raise Invalid_Formula_Error;
@@ -481,7 +461,7 @@ package body DPLL is
      (F         : Formula;
       Heuristic : Branching_Heuristic := First_Unassigned) return Solver_Result
    is
-      Initial_Model : constant Valuation := (others => Unassigned);
+      Initial_Model : constant Valuation := [others => Unassigned];
    begin
       if not Is_Valid_Formula (F) then
          raise Invalid_Formula_Error;
@@ -491,7 +471,7 @@ package body DPLL is
 
    function Unit_Propagation_Only (F : Formula) return Solver_Result is
       Work_F     : Formula := F;
-      Work_Model : Valuation := (others => Unassigned);
+      Work_Model : Valuation := [others => Unassigned];
       Conflict   : Boolean := False;
       Changed    : Boolean := False;
    begin
@@ -511,14 +491,13 @@ package body DPLL is
          end loop;
          return Solver_Result'(Status => Satisfiable, Model => Work_Model);
       else
-         --  Formula could not be fully resolved with unit propagation alone
          return Solver_Result'(Status => Unsatisfiable);
       end if;
    end Unit_Propagation_Only;
 
    function Pure_Literal_Only (F : Formula) return Solver_Result is
       Work_F     : Formula := F;
-      Work_Model : Valuation := (others => Unassigned);
+      Work_Model : Valuation := [others => Unassigned];
       Conflict   : Boolean := False;
       Changed    : Boolean := False;
    begin
