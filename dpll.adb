@@ -88,13 +88,9 @@ package body DPLL is
       Conflict : out Boolean)
    is
       Out_Clause_Idx : Clause_Count := 0;
+      Temp_Clauses   : Clause_Array (1 .. F_In.Num_Clauses);
    begin
       Conflict := False;
-      F_Out := Formula'(
-         Num_Clauses => 0,
-         Num_Vars    => F_In.Num_Vars,
-         Clauses     => [others => Clause'(Length => 0, Lits => [others => Literal'(Var => 1, Sign => Positive_Sign)])]
-      );
 
       for C_Idx in 1 .. F_In.Num_Clauses loop
          declare
@@ -124,10 +120,15 @@ package body DPLL is
             if not Clause_Satisfied then
                if Kept_Count = 0 then
                   Conflict := True;
+                  F_Out := Formula'(
+                     Num_Clauses => 0,
+                     Num_Vars    => F_In.Num_Vars,
+                     Clauses     => Temp_Clauses (1 .. 0)
+                  );
                   return;
                end if;
                Out_Clause_Idx := Out_Clause_Idx + 1;
-               F_Out.Clauses (Out_Clause_Idx) := Clause'(
+               Temp_Clauses (Out_Clause_Idx) := Clause'(
                   Length => Kept_Count,
                   Lits   => Kept_Literals (1 .. Kept_Count)
                );
@@ -135,7 +136,11 @@ package body DPLL is
          end;
       end loop;
 
-      F_Out.Num_Clauses := Out_Clause_Idx;
+      F_Out := Formula'(
+         Num_Clauses => Out_Clause_Idx,
+         Num_Vars    => F_In.Num_Vars,
+         Clauses     => Temp_Clauses (1 .. Out_Clause_Idx)
+      );
    end Assign_And_Simplify;
 
    ----------------------------------------------------------------------------
