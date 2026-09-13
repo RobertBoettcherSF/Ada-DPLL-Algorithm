@@ -22,13 +22,18 @@ Prerequisites:
 - Make utility
 
 Compile the test runner:
+```bash
 make
+```
 
 ## Usage
 Run the test suite using `make test`:
+```bash
 make test
+```
 
 Expected output:
+```text
 Running tests...
 TEST 1 - Literal Manipulation and Invariants
   PASS - 1.1 Make_Pos produces positive sign
@@ -84,9 +89,12 @@ TEST 13 - Model Evaluation and Invariant Checking
   PASS - 13.3 Satisfying valuation returns true in Is_Model
 
 ===  39 passed,  0 failed ===
+```
 
 To clean build artifacts:
+```bash
 make clean
+```
 
 ## Testing
 The test runner in `tests.adb` contains 13 test cases and 39 assertions covering:
