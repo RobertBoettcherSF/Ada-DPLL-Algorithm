@@ -18,7 +18,8 @@ is
    type Literal_Count is range 0 .. Max_Literals;
    type Clause_Count is range 0 .. Max_Clauses;
 
-   type Sign_Type is (Positive, Negative);
+   --  Enumeration for literal sign; named to avoid collision with Standard.Positive
+   type Sign_Type is (Positive_Sign, Negative_Sign);
 
    type Literal is record
       Var  : Variable_Id;
@@ -67,17 +68,17 @@ is
 
    function Make_Pos (V : Variable_Id) return Literal with
       Inline,
-      Post => Make_Pos'Result.Var = V and Make_Pos'Result.Sign = DPLL.Positive;
+      Post => Make_Pos'Result.Var = V and Make_Pos'Result.Sign = Positive_Sign;
 
    function Make_Neg (V : Variable_Id) return Literal with
       Inline,
-      Post => Make_Neg'Result.Var = V and Make_Neg'Result.Sign = DPLL.Negative;
+      Post => Make_Neg'Result.Var = V and Make_Neg'Result.Sign = Negative_Sign;
 
    function Negate (L : Literal) return Literal with
       Inline,
       Post => Negate'Result.Var = L.Var and
-              (if L.Sign = DPLL.Positive then Negate'Result.Sign = DPLL.Negative
-               else Negate'Result.Sign = DPLL.Positive);
+              (if L.Sign = Positive_Sign then Negate'Result.Sign = Negative_Sign
+               else Negate'Result.Sign = Positive_Sign);
 
    function Is_Valid_Formula (F : Formula) return Boolean;
 
@@ -107,12 +108,12 @@ is
                  Is_Model (F, Solve_Without_Pure_Literal'Result.Model));
 
    --  Pure Unit Propagation only (returns Satisfiable if simplified to empty formula,
-   --  Unsatisfiable if a conflict is found, or returns Unsatisfiable if undetermined).
+   --  or Unsatisfiable if a conflict is found or undetermined).
    function Unit_Propagation_Only (F : Formula) return Solver_Result with
       Pre => Is_Valid_Formula (F);
 
    --  Pure Literal Rule Only (eliminates pure literals repeatedly; if undetermined,
-   --  leaves remaining unassigned).
+   --  returns Unsatisfiable).
    function Pure_Literal_Only (F : Formula) return Solver_Result with
       Pre => Is_Valid_Formula (F);
 
